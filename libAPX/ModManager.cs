@@ -3,6 +3,9 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text;
 using System.Diagnostics;
+using System.Net;
+using Newtonsoft.Json.Linq;
+using Newtonsoft.Json;
 
 namespace libAPX
 {
@@ -192,6 +195,104 @@ namespace libAPX
                 }
             }
             return result;
+        }
+        public void revertTransaction()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void installModPackage()
+        {
+            // Install the APX-generated mod package and completely skip the rFactor 2 included downloading scheme
+            throw new NotImplementedException();
+        }
+        public void commitTransaction(List<string> foldersToKeep)
+        {
+
+            String rootPath = @"F:\Steam\steamapps\common\rFactor 2\";
+
+            if (!Directory.Exists(rootPath + "apx"))
+            {
+                // Create backup folders
+                Directory.CreateDirectory(rootPath + "apx");
+            }
+
+            DirectoryInfo componentDirInfo = Directory.GetParent(foldersToKeep[0]);
+
+            String componentBasePath = componentDirInfo.FullName; //we assume that at least one mod is part of the modpack
+
+            string[] allFolders = Directory.GetDirectories(componentBasePath);
+            foreach (String folder in allFolders)
+            {
+                if (!foldersToKeep.Contains(folder))
+                {
+                    // move it away
+
+                    DirectoryInfo folderRemovalInfo = new DirectoryInfo(folder);
+
+                    Directory.Move(folder, rootPath + "apx" + "\\" + componentDirInfo.Name + "\\" + folderRemovalInfo.Name );
+                }
+            }
+        }
+
+        public List<String> getFoldersToKeep(String apxUrl)
+        {
+            WebClient test = new WebClient();
+            String content = test.DownloadString(apxUrl);
+            dynamic signatures = JsonConvert.DeserializeObject(content);
+
+            dynamic mod = signatures.mod;
+
+            JArray fileSignatures = signatures.signatures;
+
+
+            // Check rFactor 2 for mods suitable to the BaseSignatur
+            List<String> foldersToKeep = new List<string>();
+
+            foreach (JObject foundMod in fileSignatures)
+            {
+                String name = (String)foundMod.GetValue("Name");
+                Boolean isVehicle = (int)foundMod.GetValue("Type") == 2;
+
+                String path = "Installed\\" + (isVehicle ? "Vehicles" : "Locations") + "\\" + name;
+                if (foundMod.ContainsKey("BaseSignature"))
+                {
+                    String rootPath = @"F:\Steam\steamapps\common\rFactor 2\" + path;
+                    String baseSignature = (String)foundMod.GetValue("BaseSignature");
+                    String overallBaseSignature = null;
+                    Boolean noParent = false;
+                    do
+                    {
+                        foreach (string file in Directory.EnumerateFiles(rootPath, "*.mft", SearchOption.AllDirectories))
+                        {
+
+                            Dictionary<string, object> iniContent = this.parseManifest(file);
+                            string modSignature = (string)iniContent.GetValueOrDefault("Signature");
+
+                            String parentPath = Directory.GetParent(file).FullName;
+
+                            if (modSignature == baseSignature)
+                            {
+                                // The found manifest features the wanted
+                                foldersToKeep.Add(parentPath);
+                            }
+
+                            // TODO if the desired mod has a parent -> search for dir
+
+                            if ((string)iniContent.GetValueOrDefault("BaseSignature") != null)
+                            {
+                                overallBaseSignature = (string)iniContent.GetValueOrDefault("BaseSignature");
+                            }
+                            else
+                            {
+                                noParent = true;
+                            }
+                        }
+                    }
+                    while (overallBaseSignature == null && !noParent);
+                }
+            }
+            return foldersToKeep;
         }
     }
 }

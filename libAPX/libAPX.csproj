@@ -5,6 +5,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.1" />
+  </ItemGroup>
+
+  <ItemGroup>
     <Reference Include="Facepunch.Steamworks.Win64">
       <HintPath>bin\Debug\netcoreapp3.1\Facepunch.Steamworks.Win64.dll</HintPath>
     </Reference>

@@ -285,61 +285,8 @@ namespace APX
 
         private void button1_Click(object sender, EventArgs e)
         {
-            WebClient test = new WebClient();
-            String content = test.DownloadString("http://localhost:8080/signatures");
-            dynamic signatures = JsonConvert.DeserializeObject(content);
-
-            dynamic mod = signatures.mod;
-
-            JArray fileSignatures = signatures.signatures;
-
-
-            // Check rFactor 2 for mods suitable to the BaseSignatur
-
-            foreach(JObject foundMod in fileSignatures)
-            {
-                String name = (String)foundMod.GetValue("Name");
-                Boolean isVehicle = (int)foundMod.GetValue("Type") == 2;
-
-                String path = "Installed\\" + (isVehicle ? "Vehicles" : "Locations") + "\\" + name;
-                List<String> foldersToKeep = new List<string>();
-                if (foundMod.ContainsKey("BaseSignature"))
-                {
-                    String rootPath = @"F:\Steam\steamapps\common\rFactor 2\" + path;
-                    String baseSignature = (String)foundMod.GetValue("BaseSignature");
-                    String overallBaseSignature = null;
-                    Boolean noParent = false;
-                    do
-                    {
-                        foreach (string file in Directory.EnumerateFiles(rootPath, "*.mft", SearchOption.AllDirectories))
-                        {
-
-                            Dictionary<string, object> iniContent = this.manager.parseManifest(file);
-                            string modSignature = (string)iniContent.GetValueOrDefault("Signature");
-
-                            String parentPath = Directory.GetParent(file).FullName;
-
-                            if (modSignature == baseSignature)
-                            {
-                                // The found manifest features the wanted
-                                foldersToKeep.Add(parentPath);
-                            }
-
-                            // TODO if the desired mod has a parent -> search for dir
-
-                            if ((string)iniContent.GetValueOrDefault("BaseSignature") != null)
-                            {
-                                overallBaseSignature = (string)iniContent.GetValueOrDefault("BaseSignature");
-                            } else
-                            {
-                                noParent = true;
-                            }
-                        }
-                    }
-                    while (overallBaseSignature == null && !noParent) ;
-                }
-            }
-
+            List <string> folders = this.manager.getFoldersToKeep("http://localhost:8080/signatures");
+            manager.commitTransaction(folders);
         }
     }
 }
