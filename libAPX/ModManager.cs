@@ -23,7 +23,12 @@ namespace libAPX
             cmd.WorkingDirectory = @"F:\Steam\steamapps\common\rFactor 2\";
             cmd.FileName = @"""F:\Steam\steamapps\common\rFactor 2\Bin64\ModMgr.exe""";
             cmd.UseShellExecute = true;
-            cmd.Arguments = @"-q -i""F:\Steam\steamapps\common\rFactor 2\Packages\" + packagePath +"\"" ;
+            if (Path.IsPathRooted(packagePath)){
+                cmd.Arguments = @"-q -i""" + packagePath + "\"";
+            } else
+            {
+                cmd.Arguments = @"-q -i""F:\Steam\steamapps\common\rFactor 2\Packages\" + packagePath + "\"";
+            }
             cmd.CreateNoWindow = true;
 
             Process p = Process.Start(cmd);
@@ -145,7 +150,7 @@ namespace libAPX
             return result;
         }
 
-        private Dictionary<string, object> parseManifest(String path)
+        public Dictionary<string, object> parseManifest(String path)
         {
             String[] needles = new string[] {"Name", "Version", "Signature", "BaseSignature", "Type"};
             Dictionary<string, object> result = new Dictionary<string, object>();

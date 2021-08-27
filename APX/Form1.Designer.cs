@@ -46,23 +46,26 @@ namespace APX
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPage1 = new System.Windows.Forms.TabPage();
             this.treeView1 = new System.Windows.Forms.TreeView();
-            this.tabPage4 = new System.Windows.Forms.TabPage();
-            this.dataGridView1 = new System.Windows.Forms.DataGridView();
-            this.WorkshopID = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.WorkshopName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage2 = new System.Windows.Forms.TabPage();
-            this.tabPage3 = new System.Windows.Forms.TabPage();
             this.dataGridView2 = new System.Windows.Forms.DataGridView();
             this.ServerName = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Track = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Ping = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.Clients = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.MaxClients = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.workshopItemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.unsubscribeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.triggerDownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.button1 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.packageContextMenuStrip.SuspendLayout();
             this.modContextMenuStrip.SuspendLayout();
             this.tabControl1.SuspendLayout();
             this.tabPage1.SuspendLayout();
-            this.tabPage4.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).BeginInit();
             this.tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
+            this.workshopItemContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // treeViewImages
@@ -112,6 +115,7 @@ namespace APX
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
             this.exitToolStripMenuItem.Size = new System.Drawing.Size(93, 22);
             this.exitToolStripMenuItem.Text = "Exit";
+            this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
             // aboutToolStripMenuItem
             // 
@@ -169,7 +173,6 @@ namespace APX
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.tabControl1.Controls.Add(this.tabPage1);
-            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
             this.tabControl1.Location = new System.Drawing.Point(12, 27);
@@ -201,47 +204,6 @@ namespace APX
             this.treeView1.Size = new System.Drawing.Size(937, 343);
             this.treeView1.TabIndex = 2;
             // 
-            // tabPage4
-            // 
-            this.tabPage4.Controls.Add(this.dataGridView1);
-            this.tabPage4.Location = new System.Drawing.Point(4, 24);
-            this.tabPage4.Name = "tabPage4";
-            this.tabPage4.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage4.Size = new System.Drawing.Size(943, 349);
-            this.tabPage4.TabIndex = 3;
-            this.tabPage4.Text = "Steam inventory (Paid content)";
-            this.tabPage4.UseVisualStyleBackColor = true;
-            // 
-            // dataGridView1
-            // 
-            this.dataGridView1.AllowUserToAddRows = false;
-            this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dataGridView1.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.WorkshopID,
-            this.WorkshopName});
-            this.dataGridView1.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.dataGridView1.Location = new System.Drawing.Point(3, 3);
-            this.dataGridView1.Name = "dataGridView1";
-            this.dataGridView1.ReadOnly = true;
-            this.dataGridView1.RowTemplate.Height = 25;
-            this.dataGridView1.ShowEditingIcon = false;
-            this.dataGridView1.Size = new System.Drawing.Size(937, 343);
-            this.dataGridView1.TabIndex = 0;
-            // 
-            // WorkshopID
-            // 
-            this.WorkshopID.HeaderText = "ID";
-            this.WorkshopID.Name = "WorkshopID";
-            this.WorkshopID.ReadOnly = true;
-            this.WorkshopID.Width = 200;
-            // 
-            // WorkshopName
-            // 
-            this.WorkshopName.HeaderText = "Name";
-            this.WorkshopName.Name = "WorkshopName";
-            this.WorkshopName.ReadOnly = true;
-            this.WorkshopName.Width = 400;
-            // 
             // tabPage2
             // 
             this.tabPage2.Controls.Add(this.dataGridView2);
@@ -253,21 +215,15 @@ namespace APX
             this.tabPage2.Text = "Servers";
             this.tabPage2.UseVisualStyleBackColor = true;
             // 
-            // tabPage3
-            // 
-            this.tabPage3.Location = new System.Drawing.Point(4, 24);
-            this.tabPage3.Name = "tabPage3";
-            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
-            this.tabPage3.Size = new System.Drawing.Size(943, 349);
-            this.tabPage3.TabIndex = 2;
-            this.tabPage3.Text = "Simulator settings";
-            this.tabPage3.UseVisualStyleBackColor = true;
-            // 
             // dataGridView2
             // 
             this.dataGridView2.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dataGridView2.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.ServerName});
+            this.ServerName,
+            this.Track,
+            this.Ping,
+            this.Clients,
+            this.MaxClients});
             this.dataGridView2.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dataGridView2.Location = new System.Drawing.Point(3, 3);
             this.dataGridView2.Name = "dataGridView2";
@@ -280,11 +236,73 @@ namespace APX
             this.ServerName.HeaderText = "Name";
             this.ServerName.Name = "ServerName";
             // 
+            // Track
+            // 
+            this.Track.HeaderText = "Track";
+            this.Track.Name = "Track";
+            // 
+            // Ping
+            // 
+            this.Ping.HeaderText = "Ping";
+            this.Ping.Name = "Ping";
+            // 
+            // Clients
+            // 
+            this.Clients.HeaderText = "Clients";
+            this.Clients.Name = "Clients";
+            // 
+            // MaxClients
+            // 
+            this.MaxClients.HeaderText = "Max clients";
+            this.MaxClients.Name = "MaxClients";
+            // 
+            // tabPage3
+            // 
+            this.tabPage3.Location = new System.Drawing.Point(4, 24);
+            this.tabPage3.Name = "tabPage3";
+            this.tabPage3.Padding = new System.Windows.Forms.Padding(3);
+            this.tabPage3.Size = new System.Drawing.Size(943, 349);
+            this.tabPage3.TabIndex = 2;
+            this.tabPage3.Text = "Simulator settings";
+            this.tabPage3.UseVisualStyleBackColor = true;
+            // 
+            // workshopItemContextMenu
+            // 
+            this.workshopItemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.unsubscribeToolStripMenuItem,
+            this.triggerDownloadToolStripMenuItem});
+            this.workshopItemContextMenu.Name = "workshopItemContextMenu";
+            this.workshopItemContextMenu.Size = new System.Drawing.Size(167, 48);
+            // 
+            // unsubscribeToolStripMenuItem
+            // 
+            this.unsubscribeToolStripMenuItem.Name = "unsubscribeToolStripMenuItem";
+            this.unsubscribeToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
+            this.unsubscribeToolStripMenuItem.Text = "Unsubscribe";
+            // 
+            // triggerDownloadToolStripMenuItem
+            // 
+            this.triggerDownloadToolStripMenuItem.Name = "triggerDownloadToolStripMenuItem";
+            this.triggerDownloadToolStripMenuItem.Size = new System.Drawing.Size(166, 22);
+            this.triggerDownloadToolStripMenuItem.Text = "Trigger download";
+            this.triggerDownloadToolStripMenuItem.Click += new System.EventHandler(this.triggerDownloadToolStripMenuItem_Click);
+            // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(469, 13);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(75, 23);
+            this.button1.TabIndex = 7;
+            this.button1.Text = "button1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(975, 429);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
@@ -299,10 +317,9 @@ namespace APX
             this.modContextMenuStrip.ResumeLayout(false);
             this.tabControl1.ResumeLayout(false);
             this.tabPage1.ResumeLayout(false);
-            this.tabPage4.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.dataGridView1)).EndInit();
             this.tabPage2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
+            this.workshopItemContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -326,12 +343,16 @@ namespace APX
         private System.Windows.Forms.ImageList treeViewImages;
         private System.Windows.Forms.TabPage tabPage1;
         private System.Windows.Forms.TreeView treeView1;
-        private System.Windows.Forms.TabPage tabPage4;
-        private System.Windows.Forms.DataGridView dataGridView1;
-        private System.Windows.Forms.DataGridViewTextBoxColumn WorkshopID;
-        private System.Windows.Forms.DataGridViewTextBoxColumn WorkshopName;
         private System.Windows.Forms.DataGridView dataGridView2;
+        private System.Windows.Forms.ContextMenuStrip workshopItemContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem unsubscribeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem triggerDownloadToolStripMenuItem;
         private System.Windows.Forms.DataGridViewTextBoxColumn ServerName;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Track;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Ping;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Clients;
+        private System.Windows.Forms.DataGridViewTextBoxColumn MaxClients;
+        private System.Windows.Forms.Button button1;
     }
 }
 

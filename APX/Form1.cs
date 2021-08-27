@@ -5,12 +5,16 @@ using System.Data;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using libAPX;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Steamworks;
 using Steamworks.Data;
+using Steamworks.Ugc;
 
 namespace APX
 {
@@ -29,28 +33,83 @@ namespace APX
         {
             this.updateTreeview();
 
-            steam.getSubscriptions(steamInventoryCallback);
-            steam.getServers(steamServersCallback);
 
         }
 
         private void steamInventoryCallback(InventoryItem[] items)
         {
-            foreach(InventoryItem item in items)
+
+            if (items != null)
             {
-                string[] row = new string[] { item.Id.ToString(), item.Def.Name };
-                dataGridView1.Rows.Add(row);
+                TreeNode node = treeView1.Nodes.Find("Paid content", false).First();
+                foreach (InventoryItem item in items)
+                {
+                    if (item.Def != null)
+                    {
+                        TreeNode child = new TreeNode();
+                        child.ContextMenuStrip = workshopItemContextMenu;
+                        child.Tag = item.Id;
+                        child.Text = item.Def.Name;
+                        node.Nodes.Add(child);
+                    }
+                }
+            }
+        }
+        private void steamWorkshopCallback(List<Item> allItems)
+        {
+            if (allItems != null)
+            {
+                List<string> foundIds = new List<string>();
+                string rootPath = null;
+                TreeNode node = treeView1.Nodes.Find("Steam", false).First();
+                foreach (Steamworks.Ugc.Item item in allItems)
+                {
+                    String id = item.Id.ToString();
+                    String title = item.Title;
+                    Boolean isInstalled = item.IsInstalled;
+                    String path = item.Directory;
+                    if (rootPath == null)
+                    {
+                        string replacement = @"\" + id;
+                        rootPath = path.Replace(replacement, "");
+                    }
+                    TreeNode child = new TreeNode();
+                    child.ContextMenuStrip = workshopItemContextMenu;
+                    child.Tag = id;
+                    child.Text = String.Format("{0}: {1}", id, title);
+                    if (Directory.Exists(path))
+                    {
+                        String[] files = Directory.GetFiles(path);
+                        foreach (String file in files)
+                        {
+                            TreeNode fileNode = new TreeNode();
+                            fileNode.Text = file;
+                            fileNode.Tag = file;
+                            if (file.EndsWith(".rfcmp"))
+                            {
+                                fileNode.ContextMenuStrip = packageContextMenuStrip;
+                            }
+                            child.Nodes.Add(fileNode);
+                        }
+                    }
+                    foundIds.Add(id);
+                    node.Nodes.Add(child);
+                }
+
             }
         }
 
         private void steamServersCallback(ServerInfo item)
         {
-            string[] row = new string[] { item.Name};
+            string[] row = new string[] { item.Name, item.Map, item.Ping.ToString(), item.Players.ToString(), item.MaxPlayers.ToString()};
             dataGridView2.Rows.Add(row);
         }
 
         private void updateTreeview()
         {
+
+            steam.getSubscriptions(steamInventoryCallback, steamWorkshopCallback);
+            steam.getServers(steamServersCallback);
             List<Mod> mods = manager.getInstalledMods();
             treeView1.BeginUpdate();
             // find out which base node were selected
@@ -79,6 +138,15 @@ namespace APX
             }
 
             treeView1.Nodes.Add(packageNode);
+
+            // Add steam node
+
+            TreeNode steamnode = new TreeNode();
+            steamnode.Text = "Steam";
+            steamnode.Name = "Steam";
+            treeView1.Nodes.Add(steamnode);
+
+
 
             // Add events
 
@@ -201,6 +269,77 @@ namespace APX
         {
             manager.deletePackageFile((string)treeView1.SelectedNode.Tag);
             this.updateTreeview();
+        }
+
+        private void exitToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void triggerDownloadToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            PublishedFileId id = new PublishedFileId();
+            id.Value = ulong.Parse((string)treeView1.SelectedNode.Tag);
+            steam.triggerDownload(id);
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            WebClient test = new WebClient();
+            String content = test.DownloadString("http://localhost:8080/signatures");
+            dynamic signatures = JsonConvert.DeserializeObject(content);
+
+            dynamic mod = signatures.mod;
+
+            JArray fileSignatures = signatures.signatures;
+
+
+            // Check rFactor 2 for mods suitable to the BaseSignatur
+
+            foreach(JObject foundMod in fileSignatures)
+            {
+                String name = (String)foundMod.GetValue("Name");
+                Boolean isVehicle = (int)foundMod.GetValue("Type") == 2;
+
+                String path = "Installed\\" + (isVehicle ? "Vehicles" : "Locations") + "\\" + name;
+                List<String> foldersToKeep = new List<string>();
+                if (foundMod.ContainsKey("BaseSignature"))
+                {
+                    String rootPath = @"F:\Steam\steamapps\common\rFactor 2\" + path;
+                    String baseSignature = (String)foundMod.GetValue("BaseSignature");
+                    String overallBaseSignature = null;
+                    Boolean noParent = false;
+                    do
+                    {
+                        foreach (string file in Directory.EnumerateFiles(rootPath, "*.mft", SearchOption.AllDirectories))
+                        {
+
+                            Dictionary<string, object> iniContent = this.manager.parseManifest(file);
+                            string modSignature = (string)iniContent.GetValueOrDefault("Signature");
+
+                            String parentPath = Directory.GetParent(file).FullName;
+
+                            if (modSignature == baseSignature)
+                            {
+                                // The found manifest features the wanted
+                                foldersToKeep.Add(parentPath);
+                            }
+
+                            // TODO if the desired mod has a parent -> search for dir
+
+                            if ((string)iniContent.GetValueOrDefault("BaseSignature") != null)
+                            {
+                                overallBaseSignature = (string)iniContent.GetValueOrDefault("BaseSignature");
+                            } else
+                            {
+                                noParent = true;
+                            }
+                        }
+                    }
+                    while (overallBaseSignature == null && !noParent) ;
+                }
+            }
+
         }
     }
 }
