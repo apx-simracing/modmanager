@@ -54,10 +54,11 @@ namespace APX
             this.Clients = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.MaxClients = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tabPage3 = new System.Windows.Forms.TabPage();
+            this.tabPage4 = new System.Windows.Forms.TabPage();
+            this.treeView2 = new System.Windows.Forms.TreeView();
             this.workshopItemContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.unsubscribeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.triggerDownloadToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.button1 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.packageContextMenuStrip.SuspendLayout();
             this.modContextMenuStrip.SuspendLayout();
@@ -65,6 +66,7 @@ namespace APX
             this.tabPage1.SuspendLayout();
             this.tabPage2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).BeginInit();
+            this.tabPage4.SuspendLayout();
             this.workshopItemContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -175,6 +177,7 @@ namespace APX
             this.tabControl1.Controls.Add(this.tabPage1);
             this.tabControl1.Controls.Add(this.tabPage2);
             this.tabControl1.Controls.Add(this.tabPage3);
+            this.tabControl1.Controls.Add(this.tabPage4);
             this.tabControl1.Location = new System.Drawing.Point(12, 27);
             this.tabControl1.Name = "tabControl1";
             this.tabControl1.SelectedIndex = 0;
@@ -266,6 +269,25 @@ namespace APX
             this.tabPage3.Text = "Simulator settings";
             this.tabPage3.UseVisualStyleBackColor = true;
             // 
+            // tabPage4
+            // 
+            this.tabPage4.Controls.Add(this.treeView2);
+            this.tabPage4.Location = new System.Drawing.Point(4, 24);
+            this.tabPage4.Name = "tabPage4";
+            this.tabPage4.Size = new System.Drawing.Size(943, 349);
+            this.tabPage4.TabIndex = 3;
+            this.tabPage4.Text = "APX Servers";
+            this.tabPage4.UseVisualStyleBackColor = true;
+            // 
+            // treeView2
+            // 
+            this.treeView2.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.treeView2.Location = new System.Drawing.Point(0, 0);
+            this.treeView2.Name = "treeView2";
+            this.treeView2.Size = new System.Drawing.Size(943, 349);
+            this.treeView2.TabIndex = 3;
+            this.treeView2.NodeMouseDoubleClick += new System.Windows.Forms.TreeNodeMouseClickEventHandler(this.treeView2_NodeMouseDoubleClick);
+            // 
             // workshopItemContextMenu
             // 
             this.workshopItemContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -287,22 +309,11 @@ namespace APX
             this.triggerDownloadToolStripMenuItem.Text = "Trigger download";
             this.triggerDownloadToolStripMenuItem.Click += new System.EventHandler(this.triggerDownloadToolStripMenuItem_Click);
             // 
-            // button1
-            // 
-            this.button1.Location = new System.Drawing.Point(469, 13);
-            this.button1.Name = "button1";
-            this.button1.Size = new System.Drawing.Size(75, 23);
-            this.button1.TabIndex = 7;
-            this.button1.Text = "button1";
-            this.button1.UseVisualStyleBackColor = true;
-            this.button1.Click += new System.EventHandler(this.button1_Click);
-            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(975, 429);
-            this.Controls.Add(this.button1);
             this.Controls.Add(this.tabControl1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
@@ -319,6 +330,7 @@ namespace APX
             this.tabPage1.ResumeLayout(false);
             this.tabPage2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.dataGridView2)).EndInit();
+            this.tabPage4.ResumeLayout(false);
             this.workshopItemContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
@@ -352,7 +364,8 @@ namespace APX
         private System.Windows.Forms.DataGridViewTextBoxColumn Ping;
         private System.Windows.Forms.DataGridViewTextBoxColumn Clients;
         private System.Windows.Forms.DataGridViewTextBoxColumn MaxClients;
-        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.TabPage tabPage4;
+        private System.Windows.Forms.TreeView treeView2;
     }
 }
 

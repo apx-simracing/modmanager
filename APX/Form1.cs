@@ -103,6 +103,9 @@ namespace APX
         {
             string[] row = new string[] { item.Name, item.Map, item.Ping.ToString(), item.Players.ToString(), item.MaxPlayers.ToString()};
             dataGridView2.Rows.Add(row);
+
+            
+
         }
 
         private void updateTreeview()
@@ -237,6 +240,38 @@ namespace APX
             }
 
             treeView1.EndUpdate();
+
+            List<APXServer> servers = this.manager.getAPXEnabledServers();
+
+            foreach (APXServer server in servers)
+            {
+                TreeNode serverNode = new TreeNode();
+                serverNode.Tag = server;
+
+                serverNode.Text = server.Name;
+
+
+                TreeNode track = new TreeNode();
+                track.Text = server.Track;
+
+
+                TreeNode session = new TreeNode();
+                session.Text = server.Session;
+
+                TreeNode content = new TreeNode();
+                content.Text = "Content";
+                foreach (string car in server.Vehicles)
+                {
+                    content.Nodes.Add(new TreeNode(car));
+                }
+
+                content.Nodes.Add(track);
+                serverNode.Nodes.Add(session);
+
+                serverNode.Nodes.Add(content);
+
+                treeView2.Nodes.Add(serverNode);
+            }
         }
 
         private void removePackageToolStripMenuItem_Click(object sender, EventArgs e)
@@ -287,6 +322,23 @@ namespace APX
         {
             List <string> folders = this.manager.getFoldersToKeep("http://localhost:8080/signatures");
             manager.commitTransaction(folders);
+            manager.installModPackage("http://localhost:8080/download");
+            //manager.runSimulation("localhost", 61290); // HTTP PORT!!!
+        }
+
+        private void treeView2_NodeMouseDoubleClick(object sender, TreeNodeMouseClickEventArgs e)
+        {
+            TreeNode selectedNode = e.Node;
+
+            if (selectedNode.Tag != null && selectedNode.Tag is APXServer)
+            {
+                APXServer server = (APXServer)selectedNode.Tag;
+                List<string> folders = this.manager.getFoldersToKeep(server.RecieverUrl +  "/signatures");
+                manager.commitTransaction(folders);
+                manager.installModPackage(server.RecieverUrl +  "/download");
+
+                manager.runSimulation(server.Host, server.Port); // HTTP PORT!!!
+            }
         }
     }
 }

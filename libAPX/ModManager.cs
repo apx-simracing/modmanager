@@ -6,11 +6,32 @@ using System.Diagnostics;
 using System.Net;
 using Newtonsoft.Json.Linq;
 using Newtonsoft.Json;
+using ICSharpCode.SharpZipLib.GZip;
+using ICSharpCode.SharpZipLib.Tar;
 
 namespace libAPX
 {
     public class ModManager
     {
+        public List<APXServer> getAPXEnabledServers()
+        {
+            List<APXServer> result = new List<APXServer>();
+
+            // stub only
+            APXServer test = new APXServer();
+            test.Name = "[APX] aston"; 
+            test.Host = "localhost";
+            test.Port = 61290; //http port
+            test.Session = "PRACTICE1";
+            test.Track = "Malaysia North Loop";
+            test.Vehicles.Add("AstonMartin_Vantage_GT3_2019");
+
+            test.RecieverUrl = "http://localhost:8080";
+
+            result.Add(test);
+
+            return result;
+        }
         public void deletePackageFile(string name)
         {
             if (name != null && name.Contains("rfcmp"))
@@ -201,10 +222,96 @@ namespace libAPX
             throw new NotImplementedException();
         }
 
-        public void installModPackage()
+        public void runSimulation(string host, int targetPort)
         {
-            // Install the APX-generated mod package and completely skip the rFactor 2 included downloading scheme
-            throw new NotImplementedException();
+            ProcessStartInfo cmd = new ProcessStartInfo();
+            cmd.WorkingDirectory = @"F:\Steam\steamapps\common\rFactor 2\";
+            cmd.FileName = @"""F:\Steam\steamapps\common\rFactor 2\Bin64\rFactor2.exe""";
+            cmd.UseShellExecute = false;
+            cmd.Arguments = @"+trace=4 +multiplayer +connect "+host+":" + targetPort.ToString();
+            cmd.CreateNoWindow = true;
+
+            Process p = Process.Start(cmd);
+            p.WaitForExit();
+        }
+
+        public TransactionResult installModPackage(String downloadUrl)
+        {
+            TransactionResult result = new TransactionResult();
+            String rf2Root = @"F:\Steam\steamapps\common\rFactor 2";
+            String rootPath = @"F:\Steam\steamapps\common\rFactor 2\apx\download";
+
+            if (Directory.Exists(rootPath))
+            {
+                Directory.CreateDirectory(rootPath);
+            }
+
+            using (var client = new WebClient())
+            {
+                string tempPath = Path.GetTempFileName();
+                client.DownloadFile(downloadUrl, tempPath);
+
+                /* unpack modpack */
+
+                Stream inStream = File.OpenRead(tempPath);
+                Stream gzipStream = new GZipInputStream(inStream);
+
+                TarArchive tarArchive = TarArchive.CreateInputTarArchive(gzipStream);
+                tarArchive.ExtractContents(rootPath);
+                tarArchive.Close();
+
+                gzipStream.Close();
+                inStream.Close();
+
+                File.Delete(tempPath);
+
+               /* installMod the content */
+
+                foreach(string kind in new string[] { "Installed\\Vehicles", "Installed\\Locations", "Installed\\rFm", "Manifests" })
+                {
+                    string path = @"F:\Steam\steamapps\common\rFactor 2\apx\download\" + kind;
+
+                    if (Directory.Exists(path))
+                    {
+                        if (kind.Contains("Vehicles") || kind.Contains("Locations"))
+                        {
+                            string[] componentToInstall = Directory.GetDirectories(path);
+
+                            foreach (string component in componentToInstall)
+                            {
+                                string[] versionsToInstall = Directory.GetDirectories(component);
+                                foreach (string version in versionsToInstall)
+                                {
+
+                                    String relativePath = version.Replace(path, "");
+                                    String targetPath = rf2Root + "\\" + kind + relativePath;
+                                    if (Directory.Exists(targetPath))
+                                    {
+                                        Directory.Delete(targetPath, true);
+                                    }
+                                    Directory.Move(version, targetPath);
+                                    result.installedComponents.Add(targetPath);
+                                }
+                            }
+                        } else
+                        {
+                            string[] filesToInstall = Directory.GetFiles(path);
+                            foreach(string file in filesToInstall)
+                            {
+                                String relativePath = file.Replace(path, "");
+                                String targetPath = rf2Root + "\\" + kind + relativePath;
+                                result.installedComponents.Add(targetPath);
+
+                                File.Move(file, targetPath, true);
+                            }
+                           
+                        }
+                    
+                    }
+                }
+
+            }
+            return result;
         }
         public void commitTransaction(List<string> foldersToKeep)
         {
@@ -217,20 +324,35 @@ namespace libAPX
                 Directory.CreateDirectory(rootPath + "apx");
             }
 
-            DirectoryInfo componentDirInfo = Directory.GetParent(foldersToKeep[0]);
 
-            String componentBasePath = componentDirInfo.FullName; //we assume that at least one mod is part of the modpack
+            string[] allFoldersVehicles = Directory.GetDirectories(rootPath + @"\Installed\Vehicles");
+            string[] allFoldersLocations = Directory.GetDirectories(rootPath + @"\Installed\Locations");
 
-            string[] allFolders = Directory.GetDirectories(componentBasePath);
-            foreach (String folder in allFolders)
+            foreach(String folder in foldersToKeep)
             {
-                if (!foldersToKeep.Contains(folder))
+                DirectoryInfo parent = Directory.GetParent(folder); // E. g. ASton_Martin_GT3_2019
+
+                String[] allFolders = Directory.GetDirectories(parent.FullName);
+
+                foreach (String children in allFolders)
                 {
-                    // move it away
+                    if (!foldersToKeep.Contains(children))
+                    {
+                        // move it away
 
-                    DirectoryInfo folderRemovalInfo = new DirectoryInfo(folder);
+                        DirectoryInfo folderRemovalInfo = new DirectoryInfo(children);
 
-                    Directory.Move(folder, rootPath + "apx" + "\\" + componentDirInfo.Name + "\\" + folderRemovalInfo.Name );
+                        if (!Directory.Exists(rootPath + "apx" + "\\" + parent.Name + "\\"))
+                        {
+                            Directory.CreateDirectory(rootPath + "apx" + "\\" + parent.Name + "\\");
+                        }
+
+                        if (!Directory.Exists(rootPath + "apx" + "\\" + parent.Name + "\\" + folderRemovalInfo.Name))
+                        {
+                            Directory.Move(folder, rootPath + "apx" + "\\" + parent.Name + "\\" + folderRemovalInfo.Name);
+                        }
+
+                    }
                 }
             }
         }
@@ -248,6 +370,7 @@ namespace libAPX
 
             // Check rFactor 2 for mods suitable to the BaseSignatur
             List<String> foldersToKeep = new List<string>();
+            Dictionary<string, Mod> seenManifests = new Dictionary<string, Mod>();
 
             foreach (JObject foundMod in fileSignatures)
             {
@@ -258,38 +381,53 @@ namespace libAPX
                 if (foundMod.ContainsKey("BaseSignature"))
                 {
                     String rootPath = @"F:\Steam\steamapps\common\rFactor 2\" + path;
+
+
+
                     String baseSignature = (String)foundMod.GetValue("BaseSignature");
-                    String overallBaseSignature = null;
-                    Boolean noParent = false;
-                    do
+                    String[] allManifests = Directory.GetFiles(rootPath, "*.mft", SearchOption.AllDirectories);
+
+
+                    List<String> signatureNeedles = new List<string>();
+                    /* collect all mod infos */
+                    foreach (string file in Directory.GetFiles(rootPath, "*.mft", SearchOption.AllDirectories))
                     {
-                        foreach (string file in Directory.EnumerateFiles(rootPath, "*.mft", SearchOption.AllDirectories))
+                        Dictionary<string, object> iniContent = this.parseManifest(file);
+
+                        string modSignature = (string)iniContent.GetValueOrDefault("Signature");
+                        String manifestBaseSignature = (string)iniContent.GetValueOrDefault("BaseSignature");
+
+                        String parentPath = Directory.GetParent(file).FullName;
+                        if (!seenManifests.ContainsKey(parentPath))
                         {
-
-                            Dictionary<string, object> iniContent = this.parseManifest(file);
-                            string modSignature = (string)iniContent.GetValueOrDefault("Signature");
-
-                            String parentPath = Directory.GetParent(file).FullName;
-
-                            if (modSignature == baseSignature)
-                            {
-                                // The found manifest features the wanted
-                                foldersToKeep.Add(parentPath);
-                            }
-
-                            // TODO if the desired mod has a parent -> search for dir
-
-                            if ((string)iniContent.GetValueOrDefault("BaseSignature") != null)
-                            {
-                                overallBaseSignature = (string)iniContent.GetValueOrDefault("BaseSignature");
-                            }
-                            else
-                            {
-                                noParent = true;
-                            }
+                            Mod manifestMod = new Mod();
+                            manifestMod.BaseSignature = manifestBaseSignature;
+                            manifestMod.Signature = modSignature;
+                            manifestMod.Name = Directory.GetParent(parentPath).Name;
+                            manifestMod.Version = Directory.GetParent(file).Name;
+                            seenManifests.Add(parentPath, manifestMod);
                         }
                     }
-                    while (overallBaseSignature == null && !noParent);
+
+                    /* Identify the tree */
+                    do {
+                        foreach (KeyValuePair<string, Mod> kvp in seenManifests)
+                        {
+                            if (baseSignature == null)
+                            {
+                                break;
+                            }
+                            String manifestSignature = kvp.Value.Signature;
+                            String manifestBaseSignature = kvp.Value.BaseSignature;
+
+                            if (manifestSignature == baseSignature)
+                            {
+                                foldersToKeep.Add(kvp.Key);
+                                baseSignature = manifestBaseSignature;
+                            }
+
+                        }
+                    }while(baseSignature != null);
                 }
             }
             return foldersToKeep;
